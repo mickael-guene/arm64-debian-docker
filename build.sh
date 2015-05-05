@@ -4,5 +4,12 @@
 SCRIPTDIR=`dirname $0`
 SCRIPTDIR=`(cd $SCRIPTDIR ; pwd)`
 
-. ${SCRIPTDIR}/build_common.sh sid
+VERSION=$1
+if [[ -z "$VERSION" ]]; then
+    for VERSION in jessie sid; do
+        . ${SCRIPTDIR}/build_common.sh ${VERSION}
+    done
+else
+    . ${SCRIPTDIR}/build_common.sh ${VERSION}
+fi
 
