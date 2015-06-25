@@ -73,5 +73,5 @@ ${TMPDIR}/tools/proot -S rootfs -q ${TMPDIR}/tools/umeq-arm64 ${TMPDIR}/scripts/
 #now create docker image
 cp ${TMPDIR}/tools/umeq-arm64 ${TMPDIR}/rootfs/usr/bin/umeq-arm64
 ln -rsf ${TMPDIR}/rootfs/usr/bin/umeq-arm64 ${TMPDIR}/rootfs/usr/bin/qemu-aarch64-static
-tar -c -C rootfs . | sudo docker import - mickaelguene/arm64-debian:${VERSION}
+tar -c -C rootfs . | docker import - mickaelguene/arm64-debian:${VERSION}
 

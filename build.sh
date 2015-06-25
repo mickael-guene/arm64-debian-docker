@@ -9,7 +9,7 @@ if [[ -z "$VERSION" ]]; then
     for VERSION in jessie sid; do
         . ${SCRIPTDIR}/build_common.sh ${VERSION}
     done
-    sudo docker tag mickaelguene/arm64-debian:sid mickaelguene/arm64-debian:latest
+    docker tag -f mickaelguene/arm64-debian:sid mickaelguene/arm64-debian:latest
 else
     . ${SCRIPTDIR}/build_common.sh ${VERSION}
 fi
