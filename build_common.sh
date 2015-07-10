@@ -32,16 +32,11 @@ mkdir -p ${TMPDIR}/scripts
 cat << EOF > ${TMPDIR}/scripts/configure_guest.sh
 #!/bin/bash -ex
 
-export PATH=/usr/local/sbin:/usr/sbin:/sbin:${PATH}
 export DEBIAN_FRONTEND=noninteractive
 export DEBCONF_NONINTERACTIVE_SEEN=true
 export LC_ALL=C LANGUAGE=C LANG=C
 /var/lib/dpkg/info/dash.preinst install
-dpkg-divert --local --rename --add /usr/sbin/adduser
-ln -s /bin/true /usr/sbin/adduser
 dpkg --configure -a
-rm /usr/sbin/adduser
-dpkg-divert --rename --remove /usr/sbin/adduser
 EOF
 chmod +x ${TMPDIR}/scripts/configure_guest.sh
 }
@@ -55,12 +50,10 @@ TMPDIR=`mktemp -d -t arm64_debian_docker_XXXXXXXX`
 trap cleanup EXIT
 cd ${TMPDIR}
 
-#get umeq and proot
+#get umeq
 mkdir -p ${TMPDIR}/tools
 wget https://raw.githubusercontent.com/mickael-guene/umeq-static-build/master/bin/umeq-arm64 -O ${TMPDIR}/tools/umeq-arm64
-wget https://raw.githubusercontent.com/mickael-guene/proot-static-build/master-umeq/static/proot-x86_64 -O ${TMPDIR}/tools/proot
 chmod +x ${TMPDIR}/tools/umeq-arm64
-chmod +x ${TMPDIR}/tools/proot
 
 #get arm64
 build_multistrap
@@ -68,10 +61,12 @@ build_multistrap
 
 #configure it
 build_configure_guest
-${TMPDIR}/tools/proot -S rootfs -q ${TMPDIR}/tools/umeq-arm64 ${TMPDIR}/scripts/configure_guest.sh
-
-#now create docker image
 cp ${TMPDIR}/tools/umeq-arm64 ${TMPDIR}/rootfs/usr/bin/umeq-arm64
 ln -rsf ${TMPDIR}/rootfs/usr/bin/umeq-arm64 ${TMPDIR}/rootfs/usr/bin/qemu-aarch64-static
-tar -c -C rootfs . | docker import - mickaelguene/arm64-debian:${VERSION}
+tar --owner=root --group=root -c -C rootfs . | docker import - tmp_before_configuration
+ID=`docker run -d -v ${TMPDIR}/scripts:/tmp/scripts tmp_before_configuration /tmp/scripts/configure_guest.sh`
+docker wait $ID
+docker commit $ID mickaelguene/arm64-debian:${VERSION}
+docker rm $ID
+docker rmi tmp_before_configuration
 
